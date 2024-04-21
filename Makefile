@@ -21,7 +21,7 @@ SRC_DIRS = \
 
 # locations of directories containing header files.
 # these locations should be specified relative to the makefile location.
-INC_DIRS = 		\
+INC_DIRS = 	\
 	inc
 
 # predefined macros
