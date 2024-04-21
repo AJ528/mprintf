@@ -25,9 +25,11 @@ struct format_flags {
 static const char lc_map[] = "0123456789abcdef";
 static const char uc_map[] = "0123456789ABCDEF";
 
-uint32_t convert_number(char * restrict out_str, uint32_t out_str_len,
+static uint32_t insert_string(char * restrict out_str, uint32_t out_str_len, 
+                    const char * restrict in_str, struct format_flags flags);
+static uint32_t convert_number(char * restrict out_str, uint32_t out_str_len,
                         uint32_t value, struct format_flags flags);
-void reverse_string(char * restrict out_str, const char * restrict in_str,
+static void reverse_string(char * restrict out_str, const char * restrict in_str,
                     uint32_t len, struct format_flags flags);
 
 uint32_t printf_(const char * restrict format_str, ...)
@@ -95,7 +97,9 @@ uint32_t vsnprintf_(char * restrict out_str, uint32_t buf_len, const char * rest
     // record how long out_str can be
     uint32_t out_str_len = buf_len - 1;
 
+    // read the format string until we reach the end
     while(format_str[read_index] != '\0'){
+        // remember where we started reading from
         const uint32_t read_start = read_index;
         //look for '%' or '\0'
         while((format_str[read_index] != '%') && (format_str[read_index] != '\0')){
@@ -111,6 +115,7 @@ uint32_t vsnprintf_(char * restrict out_str, uint32_t buf_len, const char * rest
             // copy everything
             copy_len = read_index - read_start;
         }
+        // regardless, record max length to max_str_len
         max_str_len += read_index - read_start;
         strncpy_(&out_str[write_index], &format_str[read_start], copy_len);
         write_index += copy_len;
@@ -180,6 +185,7 @@ flag_check:
                         out_str[write_index++] = (char)value;
                         out_str_len--;
                     }
+                    max_str_len++;
                     break;
                 }
                 case 'd':
@@ -204,8 +210,20 @@ flag_check:
                 }
                 case 's':
                 {
-                    char *arg_str = va_arg(arg, char*);
-                    uint32_t arg_str_len = strlen_(arg_str);
+                    const char *arg_str = va_arg(arg, char*);
+
+                    uint32_t str_len = insert_string(&out_str[write_index], 
+                                                out_str_len, arg_str, flags);
+                    if(str_len > out_str_len){
+                        write_index += out_str_len;
+                        out_str_len = 0;
+                    }else{
+                        write_index += str_len;
+                        out_str_len -= str_len;
+                    }
+                    max_str_len += str_len;
+
+
                     break;
                 }
                 case 'u':
@@ -251,7 +269,89 @@ flag_check:
 
 }
 
-uint32_t convert_number(char * restrict out_str, uint32_t out_str_len,
+uint32_t strlen_(const char * restrict str)
+{
+    uint32_t len = 0;
+
+    while(str[len++] != '\0');
+
+    // return the length of the string excluding the null byte
+    return (len - 1);
+}
+
+char * strncpy_(char * restrict dest_str, const char * restrict src_str, uint32_t len)
+{
+    uint32_t read_index = 0;
+
+    // while src_str isn't empty and we haven't copied over len characters
+    while((read_index < len) && (src_str[read_index] != '\0'))
+    {
+        dest_str[read_index] = src_str[read_index];
+        read_index++;
+    }
+
+    // if src_str was shorter than len, pad the remaining string with '\0'
+    while(read_index < len)
+    {
+        dest_str[read_index] = '\0';
+        read_index++;
+    }
+
+    return(dest_str);
+}
+
+/*
+    insert the input string into the output string.
+    insert a maximum of out_str_len characters.
+    if min_width > in_str length, add padding to beginning or end
+    depending on if it's left-aligned.
+    return number of characters written if you ignore out_str_len
+*/
+static uint32_t insert_string(char * restrict out_str, uint32_t out_str_len, 
+                    const char * restrict in_str, struct format_flags flags)
+{
+    uint32_t in_str_len = strlen_(in_str);
+    uint32_t write_index = 0;
+    uint32_t pad_len = 0;   // how much to pad (if there's space)
+    uint32_t max_len = 0;   // max length we would write if you ignore out_str_len
+    if(flags.min_width > in_str_len){
+        pad_len = flags.min_width - in_str_len;
+        max_len = flags.min_width;
+    }else{
+        max_len = in_str_len;
+    }
+
+    // if we should pad spaces before we insert the string
+    if((flags.left_align == false) && (pad_len > 0)){
+        while((write_index < pad_len) && (out_str_len > 0)){
+            out_str[write_index++] = ' ';
+            out_str_len--;
+        }
+    }
+
+    uint32_t copy_len = 0;
+
+    if(out_str_len > in_str_len){
+        copy_len = in_str_len;
+    }else{
+        copy_len = out_str_len;
+    }
+
+    strncpy_(&out_str[write_index], in_str, copy_len);
+    write_index += copy_len;
+    out_str_len -= copy_len;
+
+    // if we should pad spaces after we insert the string
+    if((flags.left_align == true) && (pad_len > 0)){
+        while((write_index < flags.min_width) && (out_str_len > 0)){
+            out_str[write_index++] = ' ';
+            out_str_len--;
+        }
+    }
+    return max_len;
+}
+
+static uint32_t convert_number(char * restrict out_str, uint32_t out_str_len,
                         uint32_t value, struct format_flags flags)
 {
     char num_buffer[NUM_MAX_WIDTH];
@@ -342,7 +442,7 @@ uint32_t convert_number(char * restrict out_str, uint32_t out_str_len,
     return num_str_len;
 }
 
-void reverse_string(char * restrict out_str, const char * restrict in_str,
+static void reverse_string(char * restrict out_str, const char * restrict in_str,
                     uint32_t len, struct format_flags flags)
 {
     if(len == 0){
@@ -351,34 +451,4 @@ void reverse_string(char * restrict out_str, const char * restrict in_str,
     while(len-- != 0){
         *(out_str++) = in_str[len];
     }
-}
-
-uint32_t strlen_(char * restrict str)
-{
-    uint32_t len = 0;
-
-    while(str[len++] != '\0');
-
-    return len;
-}
-
-char * strncpy_(char * restrict dest_str, const char * restrict src_str, uint32_t len)
-{
-    uint32_t read_index = 0;
-
-    // while src_str isn't empty and we haven't copied over len characters
-    while((read_index < len) && (src_str[read_index] != '\0'))
-    {
-        dest_str[read_index] = src_str[read_index];
-        read_index++;
-    }
-
-    // if src_str was shorter than len, pad the remaining string with '\0'
-    while(read_index < len)
-    {
-        dest_str[read_index] = '\0';
-        read_index++;
-    }
-
-    return(dest_str);
 }

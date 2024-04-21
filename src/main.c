@@ -3,36 +3,45 @@
 #include <stdint.h>
 #include "mprintf.h"
 
+#define BUFFER_SIZE     100
+
 int main(void)
 {
     // printf_("%d this is a test %x\n", 0xa3013b56, 0xdeadbeef);
     // printf("%d this is a test %x\n", 0xa3013b56, 0xdeadbeef);
 
-    char buffer[100];
+    char src_buffer[] = "short test";
+// "Green vines attached to the trunk of the tree had wound themselves \
+// toward the top of the canopy. Ants used the vine as their private highway, avoiding all \
+// the creases and crags of the bark, to freely move at top speed from top to bottom or  \
+// bottom to top depending on their current chore. At least this was the way it was supposed \
+// to be. Something had damaged the vine overnight halfway up the tree leaving a gap in the \
+// once pristine ant highway.";
+
+
+
+    char dest_buffer1[BUFFER_SIZE];
     uint32_t i = 0;
     uint32_t ret;
 
-    ret = snprintf_(buffer, (uint32_t)sizeof(buffer), "%u this %i is %d a test %x of the %u character %d buffer %x length\n", 
-                0xdeadbeef, 0xdeadbeef, 0xdeadbeef, 0xdeadbeef, 0xdeadbeef, 0xdeadbeef, 0xdeadbeef);
+    ret = snprintf_(dest_buffer1, (uint32_t)sizeof(dest_buffer1), "output1: %-020sF", src_buffer);
 
-    for(i = 0; i < sizeof(buffer); i++){
-        putchar(buffer[i]);
+    for(i = 0; i < sizeof(dest_buffer1); i++){
+        putchar(dest_buffer1[i]);
     }
+    putchar('E');
     putchar('\n');
 
     printf("ret = %u\n",ret);
 
-    ret = snprintf(buffer, (uint32_t)sizeof(buffer), "%u this %i is %d a test %x of the %u character %d buffer %x length\n", 
-                0xdeadbeef, 0xdeadbeef, 0xdeadbeef, 0xdeadbeef, 0xdeadbeef, 0xdeadbeef, 0xdeadbeef);
-    printf("ret = %u\n",ret);
+    char dest_buffer2[BUFFER_SIZE];
 
-    char buffer2[100] = "\0";
-    
-    ret = snprintf(buffer2, (uint32_t)sizeof(buffer2), "%-60s\ntestes\n", buffer);
-    
-    for(i = 0; i < sizeof(buffer2); i++){
-        putchar(buffer2[i]);
+    ret = snprintf(dest_buffer2, (uint32_t)sizeof(dest_buffer2), "output2: %-020sF", src_buffer);
+
+    for(i = 0; i < sizeof(dest_buffer2); i++){
+        putchar(dest_buffer2[i]);
     }
+    putchar('E');
     putchar('\n');
 
     printf("ret = %u\n",ret);
