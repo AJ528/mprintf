@@ -7,8 +7,8 @@
 
 int main(void)
 {
-    // printf_("%d this is a test %x\n", 0xa3013b56, 0xdeadbeef);
-    // printf("%d this is a test %x\n", 0xa3013b56, 0xdeadbeef);
+    printf_("%15d this is a test %x\n", 0xa3013b56, 0xdeadbeef);
+    printf("%15d this is a test %x\n", 0xa3013b56, 0xdeadbeef);
 
     char src_buffer[] = "short test";
 // "Green vines attached to the trunk of the tree had wound themselves \

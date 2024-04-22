@@ -12,13 +12,15 @@
 #define NUM_MAX_WIDTH    33
 
 struct format_flags {
-    bool fill_zero;
-    bool left_align;
-    bool positive_space;
-    bool display_sign;
-    bool capitalize;
-    uint32_t min_width;
-    bool is_negative;
+    bool fill_zero;         // if there's padding, should it be zero? otherwise pad with space
+    bool left_align;        // is the number left-algined?
+    bool sign_space;        // sign_space = (positive_space | display_sign | is_negative)
+    bool positive_space;    // ' ' flag
+    bool display_sign;      // '+' flag
+    bool is_negative;       // tells us to display a negative sign
+    bool capitalize;        // tells us to use captial letters for hexadecimal
+    uint32_t min_width;     // stores the minimum field width
+ 
     uint32_t base;
 };
 
@@ -29,8 +31,9 @@ static uint32_t insert_string(char * restrict out_str, uint32_t out_str_len,
                     const char * restrict in_str, struct format_flags flags);
 static uint32_t convert_number(char * restrict out_str, uint32_t out_str_len,
                         uint32_t value, struct format_flags flags);
-static void reverse_string(char * restrict out_str, const char * restrict in_str,
-                    uint32_t len, struct format_flags flags);
+static uint32_t reverse_string(char * restrict out_str, uint32_t out_str_len, 
+                    const char * restrict in_str, uint32_t in_str_len, 
+                    struct format_flags flags);
 
 uint32_t printf_(const char * restrict format_str, ...)
 {
@@ -150,10 +153,12 @@ flag_check:
                     goto flag_check;
                 case ' ':
                     flags.positive_space = true;
+                    flags.sign_space = true;
                     read_index++;
                     goto flag_check;
                 case '+':
                     flags.display_sign = true;
+                    flags.sign_space = true;
                     read_index++;
                     goto flag_check;
                 default:
@@ -194,6 +199,7 @@ flag_check:
                     value = va_arg(arg, uint32_t);
                     if((int32_t)value < 0){
                         flags.is_negative = true;
+                        flags.sign_space = true;
                         //make it positive
                         value = -(int32_t)value;
                     }
@@ -357,7 +363,6 @@ static uint32_t convert_number(char * restrict out_str, uint32_t out_str_len,
     char num_buffer[NUM_MAX_WIDTH];
     uint32_t cur_val = value;
     uint32_t num_str_len = 0;
-    bool sign_space;
 
     // not allowed. This will overflow num_buffer
     if(flags.min_width > NUM_MAX_WIDTH){
@@ -365,12 +370,8 @@ static uint32_t convert_number(char * restrict out_str, uint32_t out_str_len,
         flags.min_width = NUM_MAX_WIDTH;
     }
 
-    if(flags.positive_space == true || flags.display_sign == true || flags.is_negative == true){
-        sign_space = true;
-    }else{
-        sign_space = false;
-    }
-
+    // calculate what each digit should be
+    // this algorithm produces a backwards string
     do{
         uint32_t digit = cur_val % flags.base;
         char c_digit;
@@ -396,59 +397,70 @@ static uint32_t convert_number(char * restrict out_str, uint32_t out_str_len,
         num_buffer[num_str_len] = '-';
     }
 
-    if(sign_space){
+    if(flags.sign_space){
         num_str_len++;
     }
 
-    if(flags.fill_zero == true){
-        char sign;
-        // if there is a sign, remember what it is
-        if(sign_space == true){
-            num_str_len--;
-            sign = num_buffer[num_str_len];
-        }
-        // if there's room for padding
-        if(flags.min_width > num_str_len){
-            do{
-                // add zeros until we hit the min width
-                num_buffer[num_str_len++] = '0';
-            }while(flags.min_width > num_str_len);
-            // if there is a sign, overwrite the last 0 with the sign
-            if(sign_space == true){
-                num_buffer[num_str_len - 1] = sign;
-            }
-        }else{
-            // nothing was touched, so put num_str_len back
-            num_str_len++;
-        }
-    }else{
-        //add spaces until we hit the min width
-        while(flags.min_width > num_str_len){
-            num_buffer[num_str_len++] = ' ';
-        }
-    }
+    // reverse the backwards string and add appropriate padding
+    uint32_t max_len = reverse_string(out_str, out_str_len, 
+                            num_buffer, num_str_len, flags);
 
-    uint32_t copy_len = 0;
-    if(num_str_len > out_str_len){
-        copy_len = out_str_len;
-    }else{
-        copy_len = num_str_len;
-    }
-
-    reverse_string(out_str, num_buffer, copy_len, flags);
-
-
-
-    return num_str_len;
+    return max_len;
 }
 
-static void reverse_string(char * restrict out_str, const char * restrict in_str,
-                    uint32_t len, struct format_flags flags)
+static uint32_t reverse_string(char * restrict out_str, uint32_t out_str_len, 
+                    const char * restrict in_str, uint32_t in_str_len, 
+                    struct format_flags flags)
 {
-    if(len == 0){
-        return;
+    if(out_str_len == 0){
+        return 0;
     }
-    while(len-- != 0){
-        *(out_str++) = in_str[len];
+
+    uint32_t pad_len = 0;
+
+    // if there is padding, calculate it
+    if(flags.min_width > in_str_len){
+        pad_len = flags.min_width - in_str_len;
     }
+
+    // this is the maximum length of the string if you ignore out_str_len
+    uint32_t max_len = pad_len + in_str_len;
+
+    if(flags.left_align == true){
+        while((out_str_len-- > 0) && (in_str_len-- > 0)){
+            *(out_str++) = in_str[in_str_len];
+        }
+
+        while((out_str_len-- > 0) && (pad_len-- > 0)){
+            *(out_str++) = ' ';
+        }
+    }else{  // right align number
+        if(flags.fill_zero == true){
+            // if there is a sign, print that before filling with zeros
+            if(flags.sign_space == true){
+                //this is safe because we know out_str_len is at least 1
+                *(out_str++) = in_str[--in_str_len];
+                out_str_len--;
+            }
+
+            while((out_str_len-- > 0) && (pad_len-- > 0)){
+                *(out_str++) = '0';
+            }
+            
+            while((out_str_len-- > 0) && (in_str_len-- > 0)){
+                *(out_str++) = in_str[in_str_len];
+            }
+
+        }else{ // right align number and pad with spaces
+            while((out_str_len-- > 0) && (pad_len-- > 0)){
+                *(out_str++) = ' ';
+            }
+
+            while((out_str_len-- > 0) && (in_str_len-- > 0)){
+                *(out_str++) = in_str[in_str_len];
+            }
+        }
+    }
+
+    return max_len;
 }
