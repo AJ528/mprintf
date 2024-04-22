@@ -108,8 +108,9 @@ DEPS := $(addprefix $(DEP_DIR)/, $(addsuffix .d, $(notdir $(basename $(DEP_SRCS)
 .PHONY: run
 
 run:
-	$(MAKE) image
-	$(TARGET)
+	@$(MAKE) --no-print-directory $(TARGET)
+	@printf "\n***RUNNING PROGRAM***\n"
+	@$(TARGET)
 
 # rule for linking the overall image from object files. This is the default rule that is called
 # if you type "make" with no arguments. The prerequisites are the object files and the existence
@@ -175,7 +176,7 @@ $(BIN_DIR) $(OBJ_DIR) $(DEP_DIR):
 .PHONY: clean pdebug image
 
 image: 
-	$(MAKE) $(TARGET)
+	@$(MAKE) --no-print-directory $(TARGET)
 
 # recipe to print some debug information
 pdebug:
