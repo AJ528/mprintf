@@ -38,6 +38,35 @@ TEST snprintf_test(const char * restrict format_str, uint32_t test_value)
     PASS();
 }
 
+TEST meta_number_test(const char * restrict meta_format_str, uint32_t test_value)
+{
+	char format_str[BUFFER_SIZE * 2] = "";
+
+	snprintf(format_str, sizeof(format_str), meta_format_str, 'b');
+	CHECK_CALL(snprintf_test(format_str, test_value));
+
+	snprintf(format_str, sizeof(format_str), meta_format_str, 'd');
+	CHECK_CALL(snprintf_test(format_str, test_value));
+
+	snprintf(format_str, sizeof(format_str), meta_format_str, 'i');
+	CHECK_CALL(snprintf_test(format_str, test_value));
+
+	snprintf(format_str, sizeof(format_str), meta_format_str, 'p');
+	CHECK_CALL(snprintf_test(format_str, test_value));
+
+	snprintf(format_str, sizeof(format_str), meta_format_str, 'u');
+	CHECK_CALL(snprintf_test(format_str, test_value));
+
+	snprintf(format_str, sizeof(format_str), meta_format_str, 'x');
+	CHECK_CALL(snprintf_test(format_str, test_value));
+
+	snprintf(format_str, sizeof(format_str), meta_format_str, 'X');
+	CHECK_CALL(snprintf_test(format_str, test_value));
+
+
+	PASS();
+}
+
 SUITE(d_flag_suite) {
     RUN_TESTp(sprintf_test, "%d", (uint32_t)rand());
     RUN_TESTp(sprintf_test, "this is a %d test string 46 characters long. END", 150);
@@ -75,6 +104,8 @@ int main(int argc, char **argv) {
     GREATEST_MAIN_BEGIN();  // command-line options, initialization.
 
     RUN_SUITE(d_flag_suite);
+
+	RUN_TESTp(meta_number_test, "first meta %%%c number test", 150);
 
     GREATEST_MAIN_END();    // display results
 }
