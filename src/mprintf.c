@@ -254,6 +254,15 @@ flag_check:
                     flags.base = 16;
                     break;
                 }
+                case '%':
+                {
+                    if(out_str_len != 0){
+                        out_str[write_index++] = '%';
+                        out_str_len--;
+                    }
+                    max_str_len++;
+                    break;
+                }
             }
             if(run_convert_number == true){
                 uint32_t num_str_len = convert_number(&out_str[write_index], out_str_len, value, flags);
@@ -364,11 +373,11 @@ static uint32_t convert_number(char * restrict out_str, uint32_t out_str_len,
     uint32_t cur_val = value;
     uint32_t num_str_len = 0;
 
-    // not allowed. This will overflow num_buffer
-    if(flags.min_width > NUM_MAX_WIDTH){
-        // set the min_width to the size of num_buffer
-        flags.min_width = NUM_MAX_WIDTH;
-    }
+    // // not allowed. This will overflow num_buffer
+    // if(flags.min_width > NUM_MAX_WIDTH){
+    //     // set the min_width to the size of num_buffer
+    //     flags.min_width = NUM_MAX_WIDTH;
+    // }
 
     // calculate what each digit should be
     // this algorithm produces a backwards string
@@ -427,11 +436,15 @@ static uint32_t reverse_string(char * restrict out_str, uint32_t out_str_len,
     uint32_t max_len = pad_len + in_str_len;
 
     if(flags.left_align == true){
-        while((out_str_len-- > 0) && (in_str_len-- > 0)){
+        while((out_str_len > 0) && (in_str_len > 0)){
+            out_str_len--;
+            in_str_len--;            
             *(out_str++) = in_str[in_str_len];
         }
 
-        while((out_str_len-- > 0) && (pad_len-- > 0)){
+        while((out_str_len > 0) && (pad_len > 0)){
+            out_str_len--;
+            pad_len--;            
             *(out_str++) = ' ';
         }
     }else{  // right align number
@@ -443,20 +456,28 @@ static uint32_t reverse_string(char * restrict out_str, uint32_t out_str_len,
                 out_str_len--;
             }
 
-            while((out_str_len-- > 0) && (pad_len-- > 0)){
+            while((out_str_len > 0) && (pad_len > 0)){
+                out_str_len--;
+                pad_len--;                
                 *(out_str++) = '0';
             }
             
-            while((out_str_len-- > 0) && (in_str_len-- > 0)){
+            while((out_str_len > 0) && (in_str_len > 0)){
+                out_str_len--;
+                in_str_len--;                
                 *(out_str++) = in_str[in_str_len];
             }
 
         }else{ // right align number and pad with spaces
-            while((out_str_len-- > 0) && (pad_len-- > 0)){
+            while((out_str_len > 0) && (pad_len > 0)){
+                out_str_len--;
+                pad_len--;                
                 *(out_str++) = ' ';
             }
 
-            while((out_str_len-- > 0) && (in_str_len-- > 0)){
+            while((out_str_len > 0) && (in_str_len > 0)){
+                out_str_len--;
+                in_str_len--;
                 *(out_str++) = in_str[in_str_len];
             }
         }
