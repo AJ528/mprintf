@@ -6,10 +6,9 @@
 #include <stdio.h>
 
 // maximum length of a single number including sign and padding
-// size of 33 should be enough to hold any 32 bit number converted to 
-// binary (widest format) plus a sign character (but why you ever do a
-// signed binary number?)
-#define NUM_MAX_WIDTH    33
+// size of 34 should be enough to hold any 32 bit number converted to 
+// binary (widest format) plus a prefix of "0b"
+#define NUM_MAX_WIDTH    34
 
 struct format_flags {
     bool fill_zero;         // if there's padding, should it be zero? otherwise pad with space
@@ -18,6 +17,7 @@ struct format_flags {
     bool positive_space;    // ' ' flag
     bool display_sign;      // '+' flag
     bool is_negative;       // tells us to display a negative sign
+    bool display_prefix;    // tells us to display a prefix before the base 2 or base 16 number ("0x" or "0b")
     bool capitalize;        // tells us to use captial letters for hexadecimal
     uint32_t min_width;     // stores the minimum field width
  
@@ -132,6 +132,7 @@ uint32_t vsnprintf_(char * restrict out_str, uint32_t buf_len, const char * rest
                 .positive_space = false,
                 .display_sign = false,
                 .min_width = 0,
+                .display_prefix = false,
                 .capitalize = false,
                 .is_negative = false,
                 .base = 10
@@ -161,6 +162,10 @@ flag_check:
                     flags.sign_space = true;
                     read_index++;
                     goto flag_check;
+                case '#':
+                    flags.display_prefix = true;
+                    read_index++;
+                    goto flag_check;
                 default:
                     break;
             }
@@ -181,6 +186,9 @@ flag_check:
                     value = va_arg(arg, uint32_t);
                     run_convert_number = true;
                     flags.base = 2;
+                    flags.positive_space = false;
+                    flags.display_sign = false;
+                    flags.sign_space = false;
                     break;
                 }
                 case 'c':
@@ -212,6 +220,7 @@ flag_check:
                     value = va_arg(arg, uint32_t);
                     run_convert_number = true;
                     flags.base = 16;
+                    flags.display_prefix = true;
                     break;
                 }
                 case 's':
@@ -237,6 +246,8 @@ flag_check:
                     value = va_arg(arg, uint32_t);
                     run_convert_number = true;
                     flags.base = 10;
+                    flags.display_sign = false;
+                    flags.sign_space = false;
                     break;
                 }
                 case 'X':
@@ -245,6 +256,9 @@ flag_check:
                     run_convert_number = true;
                     flags.base = 16;
                     flags.capitalize = true;
+                    flags.positive_space = false;
+                    flags.display_sign = false;
+                    flags.sign_space = false;
                     break;
                 }
                 case 'x':
@@ -252,6 +266,9 @@ flag_check:
                     value = va_arg(arg, uint32_t);
                     run_convert_number = true;
                     flags.base = 16;
+                    flags.positive_space = false;
+                    flags.display_sign = false;
+                    flags.sign_space = false;
                     break;
                 }
                 case '%':
@@ -373,10 +390,11 @@ static uint32_t convert_number(char * restrict out_str, uint32_t out_str_len,
     uint32_t cur_val = value;
     uint32_t num_str_len = 0;
 
-    // // not allowed. This will overflow num_buffer
-    // if(flags.min_width > NUM_MAX_WIDTH){
-    //     // set the min_width to the size of num_buffer
-    //     flags.min_width = NUM_MAX_WIDTH;
+    // we do not support negative binary or hexadecimal numbers
+    // if((flags.base == 2) || (flags.base == 16)){
+    //     flags.positive_space = false;
+    //     flags.display_sign = false;
+    //     flags.sign_space = false;
     // }
 
     // calculate what each digit should be
@@ -392,6 +410,18 @@ static uint32_t convert_number(char * restrict out_str, uint32_t out_str_len,
         num_buffer[num_str_len++] = c_digit;
         cur_val /= flags.base;
     }while(cur_val != 0);
+
+    if(flags.display_prefix == true){
+        if(flags.base == 16){
+            num_buffer[num_str_len++] = 'x';
+            num_buffer[num_str_len++] = '0';
+        }else if(flags.base == 2){
+            num_buffer[num_str_len++] = 'b';
+            num_buffer[num_str_len++] = '0';
+        }else{  // flag base is 10 and we don't print a prefix for that
+            flags.display_prefix = false;
+        }
+    }
 
     // order matters for these if statements. 
     // if negative, a minus sign should always be displayed
@@ -454,6 +484,14 @@ static uint32_t reverse_string(char * restrict out_str, uint32_t out_str_len,
                 //this is safe because we know out_str_len is at least 1
                 *(out_str++) = in_str[--in_str_len];
                 out_str_len--;
+            }
+            if(flags.display_prefix == true){
+                uint32_t prefix_len = 2;    //prefix is always 2 characters long
+                while((out_str_len > 0) && (prefix_len > 0)){
+                    *(out_str++) = in_str[--in_str_len];
+                    out_str_len--;
+                    prefix_len--;
+                }
             }
 
             while((out_str_len > 0) && (pad_len > 0)){
