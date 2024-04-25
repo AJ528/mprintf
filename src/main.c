@@ -23,6 +23,21 @@ TEST sprintf_test(const char * restrict format_str, uint32_t test_value)
     PASS();
 }
 
+TEST sprintf_string_test(const char * restrict format_str, const char * restrict in_str)
+{
+    char expected[BUFFER_SIZE * 2] = "";
+    char actual[BUFFER_SIZE * 2] = "";
+    expected[BUFFER_SIZE] = '\0';
+    actual[BUFFER_SIZE] = '\0';
+
+    sprintf(expected, format_str, in_str);
+    sprintf_(actual, format_str, in_str);
+
+    ASSERT_STR_EQ(expected, actual);
+
+    PASS();
+}
+
 TEST snprintf_test(const char * restrict format_str, uint32_t test_value)
 {
     char expected[BUFFER_SIZE * 2] = "";
@@ -125,10 +140,25 @@ SUITE(meta_number_suite){
         snprintf(format_str, sizeof(format_str), "multi flag meta %%%%-+ 0%d%%c number test", i);
         RUN_TESTp(meta_number_test, format_str, 150);
     }
+}
+
+SUITE(other_tests){
 
     RUN_TESTp(sprintf_test, "prefix %#x number test", 0xdeadbeef);
     //note: I purposely do not test the prefix of capital X. Printf prints a prefix of "0X" but mprint will print "0x".
     RUN_TESTp(sprintf_test, "prefix %#b number test", 0xdeadbeef);
+
+    RUN_TESTp(sprintf_test, "%c character test", 'Q');
+    RUN_TESTp(sprintf_test, "Also %c character test", 'Z');
+    RUN_TESTp(sprintf_test, "Also character test %c", '6');    
+
+    RUN_TESTp(sprintf_string_test, "string insertion %s test", "this is a string to be inserted");
+    RUN_TESTp(sprintf_string_test, "string insertion %30s test", "string to be inserted");
+    RUN_TESTp(sprintf_string_test, "string insertion %-30s test", "string to be inserted");
+    RUN_TESTp(sprintf_string_test, "string insertion %-30s test", "string\0 to be inserted");
+    RUN_TESTp(sprintf_string_test, "string \0insertion %s test", "this is a string to be inserted");
+
+
 }
 
 
@@ -139,6 +169,7 @@ int main(int argc, char **argv) {
     GREATEST_MAIN_BEGIN();  // command-line options, initialization.
 
     RUN_SUITE(meta_number_suite);
+    RUN_SUITE(other_tests);
 
     GREATEST_MAIN_END();    // display results
 }

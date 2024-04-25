@@ -3,7 +3,7 @@
 
 # set debug to 0 or 1
 # adjust optimization flag accordingly below
-debug = 1
+debug = 0
 
 # names of directories for compiled objects
 BIN_DIR = bin
