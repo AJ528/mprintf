@@ -390,13 +390,6 @@ static uint32_t convert_number(char * restrict out_str, uint32_t out_str_len,
     uint32_t cur_val = value;
     uint32_t num_str_len = 0;
 
-    // we do not support negative binary or hexadecimal numbers
-    // if((flags.base == 2) || (flags.base == 16)){
-    //     flags.positive_space = false;
-    //     flags.display_sign = false;
-    //     flags.sign_space = false;
-    // }
-
     // calculate what each digit should be
     // this algorithm produces a backwards string
     do{
