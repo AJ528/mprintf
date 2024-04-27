@@ -45,10 +45,11 @@ TEST snprintf_test(const char * restrict format_str, uint32_t test_value)
     expected[BUFFER_SIZE] = '\0';
     actual[BUFFER_SIZE] = '\0';
 
-    snprintf(expected, BUFFER_SIZE, format_str, test_value);
-    snprintf_(actual, BUFFER_SIZE, format_str, test_value);
+    uint32_t expected_ret = snprintf(expected, BUFFER_SIZE, format_str, test_value);
+    uint32_t actual_ret = snprintf_(actual, BUFFER_SIZE, format_str, test_value);
 
     ASSERT_STR_EQ(expected, actual);
+    GREATEST_ASSERT_EQ_FMT(expected_ret, actual_ret, "%d");
 
     PASS();
 }
@@ -60,10 +61,11 @@ TEST snprintf_test2(const char * restrict format_str, uint32_t test_value, uint3
     expected[BUFFER_SIZE] = '\0';
     actual[BUFFER_SIZE] = '\0';
 
-    snprintf(expected, BUFFER_SIZE, format_str, test_value, test_value2);
-    snprintf_(actual, BUFFER_SIZE, format_str, test_value, test_value2);
+    uint32_t expected_ret = snprintf(expected, BUFFER_SIZE, format_str, test_value, test_value2);
+    uint32_t actual_ret = snprintf_(actual, BUFFER_SIZE, format_str, test_value, test_value2);
 
     ASSERT_STR_EQ(expected, actual);
+    GREATEST_ASSERT_EQ_FMT(expected_ret, actual_ret, "%d");
 
     PASS();
 }
@@ -124,7 +126,7 @@ SUITE(meta_number_suite){
 
     for(i = 0; i < BUFFER_SIZE; i++){
         char format_str[BUFFER_SIZE * 2] = "";
-
+        
         snprintf(format_str, sizeof(format_str), "left justify meta %%%%-%d%%c number test", i);
         RUN_TESTp(meta_number_test, format_str, 150);
         snprintf(format_str, sizeof(format_str), "leading 0 meta %%%%0%d%%c number test", i);
