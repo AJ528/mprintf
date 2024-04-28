@@ -28,19 +28,19 @@ struct format_flags {
 static const char lc_map[] = "0123456789abcdef";
 static const char uc_map[] = "0123456789ABCDEF";
 
-static uint32_t insert_string(char * restrict out_str, uint32_t out_str_len, 
+static int32_t insert_string(char * restrict out_str, uint32_t out_str_len, 
                     const char * restrict in_str, struct format_flags flags);
-static uint32_t convert_number(char * restrict out_str, uint32_t out_str_len,
+static int32_t convert_number(char * restrict out_str, uint32_t out_str_len,
                         uint32_t value, struct format_flags flags);
-static uint32_t reverse_string(char * restrict out_str, uint32_t out_str_len, 
+static int32_t reverse_string(char * restrict out_str, uint32_t out_str_len, 
                     const char * restrict in_str, uint32_t in_str_len, 
                     struct format_flags flags);
 
-uint32_t printf_(const char * restrict format_str, ...)
+int32_t printf_(const char * restrict format_str, ...)
 {
     char output_buffer[1000];
     va_list arg;
-    uint32_t ret;
+    int32_t ret;
 
     // start reading the list of variable length arguments
     va_start(arg, format_str);
@@ -49,17 +49,17 @@ uint32_t printf_(const char * restrict format_str, ...)
 
     va_end(arg);
 
-    for(uint32_t i = 0; i < ret; i++){
+    for(int32_t i = 0; i < ret; i++){
         putchar(output_buffer[i]);
     }
 
     return(ret);
 }
 
-uint32_t sprintf_(char * restrict out_str, const char * restrict format_str, ...)
+int32_t sprintf_(char * restrict out_str, const char * restrict format_str, ...)
 {
     va_list arg;
-    uint32_t ret;
+    int32_t ret;
 
     // start reading the list of variable length arguments
     va_start(arg, format_str);
@@ -71,10 +71,10 @@ uint32_t sprintf_(char * restrict out_str, const char * restrict format_str, ...
     return(ret);
 }
 
-uint32_t snprintf_(char * restrict out_str, uint32_t buf_len, const char * restrict format_str, ...)
+int32_t snprintf_(char * restrict out_str, uint32_t buf_len, const char * restrict format_str, ...)
 {
     va_list arg;
-    uint32_t ret;
+    int32_t ret;
 
     // start reading the list of variable length arguments
     va_start(arg, format_str);
@@ -88,12 +88,12 @@ uint32_t snprintf_(char * restrict out_str, uint32_t buf_len, const char * restr
 
 // assumes format_str ends with '\0'
 // returns the theoretical number of characters written to buffer, assuming infininte buffer space
-uint32_t vsnprintf_(char * restrict out_str, uint32_t buf_len, const char * restrict format_str, va_list arg)
+int32_t vsnprintf_(char * restrict out_str, uint32_t buf_len, const char * restrict format_str, va_list arg)
 {
     uint32_t read_index = 0;
     uint32_t write_index = 0;
     //length of output string if we run into no buffer limits
-    uint32_t max_str_len = 0;
+    int32_t max_str_len = 0;
 
     if(buf_len == 0){
         return 0;
@@ -240,10 +240,13 @@ flag_check:
                     const char *arg_str = va_arg(arg, char*);
                     // str_len is the length of the string we wanted to insert
                     // but if it's too long then it gets truncated
-                    uint32_t str_len = insert_string(&out_str[write_index], 
+                    int32_t str_len = insert_string(&out_str[write_index], 
                                                 out_str_len, arg_str, flags);
                     // update write_index and out_str_len with the actual change in length
-                    if(str_len > out_str_len){
+                    if(str_len < 0){
+                        return str_len;
+                    }
+                    if((uint32_t)str_len > out_str_len){
                         write_index += out_str_len;
                         out_str_len = 0;
                     }else{
@@ -252,8 +255,6 @@ flag_check:
                     }
                     // max_str_len always gets updated with the maximum length
                     max_str_len += str_len;
-
-
                     break;
                 }
                 case 'u':
@@ -366,13 +367,13 @@ char * strncpy_(char * restrict dest_str, const char * restrict src_str, uint32_
     depending on if it's left-aligned.
     return number of characters written if you ignore out_str_len
 */
-static uint32_t insert_string(char * restrict out_str, uint32_t out_str_len, 
+static int32_t insert_string(char * restrict out_str, uint32_t out_str_len, 
                     const char * restrict in_str, struct format_flags flags)
 {
     uint32_t in_str_len = strlen_(in_str);
     uint32_t write_index = 0;
     uint32_t pad_len = 0;   // how much to pad (if there's space)
-    uint32_t max_len = 0;   // max length we would write if you ignore out_str_len
+    int32_t max_len = 0;   // max length we would write if you ignore out_str_len
     // determine if there needs to be padding
     // max_len is the greater of flags.min_width and in_str_len
     if(flags.min_width > in_str_len){
@@ -414,7 +415,7 @@ static uint32_t insert_string(char * restrict out_str, uint32_t out_str_len,
     return max_len;
 }
 
-static uint32_t convert_number(char * restrict out_str, uint32_t out_str_len,
+static int32_t convert_number(char * restrict out_str, uint32_t out_str_len,
                         uint32_t value, struct format_flags flags)
 {
     char num_buffer[NUM_MAX_WIDTH];
@@ -481,14 +482,14 @@ static uint32_t convert_number(char * restrict out_str, uint32_t out_str_len,
 
     // reverse the backwards string and add appropriate padding
     // max_len is the max length the number would be if you ignore out_str_len
-    uint32_t max_len = reverse_string(out_str, out_str_len, 
+    int32_t max_len = reverse_string(out_str, out_str_len, 
                             num_buffer, num_str_len, flags);
 
     // return the max theoretical length
     return max_len;
 }
 
-static uint32_t reverse_string(char * restrict out_str, uint32_t out_str_len, 
+static int32_t reverse_string(char * restrict out_str, uint32_t out_str_len, 
                     const char * restrict in_str, uint32_t in_str_len, 
                     struct format_flags flags)
 {
@@ -500,7 +501,7 @@ static uint32_t reverse_string(char * restrict out_str, uint32_t out_str_len,
     }
 
     // this is the maximum length of the string if you ignore out_str_len
-    uint32_t max_len = pad_len + in_str_len;
+    int32_t max_len = pad_len + in_str_len;
     
     // if the number is left-aligned, print it first before printing any padding any
     // prefixes or signs are located at the end of in_str so they will be printed first
