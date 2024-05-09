@@ -1,6 +1,12 @@
 # mprintf
 simple no-float 32-bit printf
 
+### Status 
+
+Does everything I need it to. Will fix bugs as I come across them.
+
+### Details
+
 Compiles down to 1370 bytes on `arm-none-eabi-gcc` with `-Os` optimizations.
 mprintf is about 400 lines of code (per David A. Wheeler's `SLOCCount`)
 
