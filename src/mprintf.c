@@ -49,7 +49,7 @@ int32_t printf_(const char * restrict format_str, ...)
     // start reading the list of variable length arguments
     va_start(arg, format_str);
 
-    ret = vsnprintf_(output_buffer, UINT32_MAX, format_str, arg);
+    ret = vsnprintf_(output_buffer, PRINTF_BUFFER_SIZE, format_str, arg);
 
     va_end(arg);
 
