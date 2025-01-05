@@ -40,11 +40,49 @@ static int32_t reverse_string(char * restrict out_str, uint32_t out_str_len,
                     const char * restrict in_str, uint32_t in_str_len, 
                     struct format_flags flags);
 
-int32_t printf_(const char * restrict format_str, ...)
+
+// prints a string to output, but does not print a newline character at the end
+// returns the number of characters printed
+int32_t puts_(const char * restrict str)
+{
+    int32_t i = 0;
+
+    // increment until we hit the string terminating character
+    while(str[i] != '\0'){
+        putchar(str[i++]);
+    }
+
+    return(i);
+}
+
+// prints a string to output, then prints a newline character
+// returns the number of characters printed
+int32_t println_(const char * restrict str)
+{
+    int32_t i = 0;
+
+    // increment until we hit the string terminating character
+    while(str[i] != '\0'){
+        putchar(str[i++]);
+    }
+
+    // adjust line-ending as you see fit 
+    putchar('\r');
+    i++;
+    putchar('\n');
+    i++;
+
+    return(i);
+}
+
+// prints a formatted string to the output, then prints a newline character
+// returns the number of characters successfully printed
+int32_t printfln_(const char * restrict format_str, ...)
 {
     char output_buffer[PRINTF_BUFFER_SIZE];
     va_list arg;
     int32_t ret;
+    int32_t print_len;
 
     // start reading the list of variable length arguments
     va_start(arg, format_str);
@@ -53,11 +91,52 @@ int32_t printf_(const char * restrict format_str, ...)
 
     va_end(arg);
 
-    for(int32_t i = 0; i < ret; i++){
+    if(ret > (PRINTF_BUFFER_SIZE - 1)){
+        print_len = (PRINTF_BUFFER_SIZE - 1);
+    }else{
+        print_len = ret;
+    }
+
+    for(int32_t i = 0; i < print_len; i++){
         putchar(output_buffer[i]);
     }
 
-    return(ret);
+    // adjust line-ending as you see fit 
+    putchar('\r');
+    print_len++;
+    putchar('\n');
+    print_len++;
+
+    return(print_len);
+}
+
+// prints a formatted string to the output
+// returns the number of characters successfully printed
+int32_t printf_(const char * restrict format_str, ...)
+{
+    char output_buffer[PRINTF_BUFFER_SIZE];
+    va_list arg;
+    int32_t ret;
+    int32_t print_len;
+
+    // start reading the list of variable length arguments
+    va_start(arg, format_str);
+
+    ret = vsnprintf_(output_buffer, PRINTF_BUFFER_SIZE, format_str, arg);
+
+    va_end(arg);
+
+    if(ret > (PRINTF_BUFFER_SIZE - 1)){
+        print_len = (PRINTF_BUFFER_SIZE - 1);
+    }else{
+        print_len = ret;
+    }
+
+    for(int32_t i = 0; i < print_len; i++){
+        putchar(output_buffer[i]);
+    }
+
+    return(print_len);
 }
 
 int32_t sprintf_(char * restrict out_str, const char * restrict format_str, ...)
@@ -90,7 +169,9 @@ int32_t snprintf_(char * restrict out_str, uint32_t buf_len, const char * restri
     return(ret);
 }
 
-// assumes format_str ends with '\0'
+// this function assumes format_str ends with '\0'
+// this function will not put more than buf_len chars into out_str
+// if buf_len is at least 1, out_str will be terminated with a '\0'
 // returns the theoretical number of characters written to buffer, assuming infininte buffer space
 int32_t vsnprintf_(char * restrict out_str, uint32_t buf_len, const char * restrict format_str, va_list arg)
 {
@@ -216,6 +297,7 @@ flag_check:
                     break;
                 }
                 case 'd':
+                    // fall through
                 case 'i':
                 {
                     value = va_arg(arg, uint32_t);
@@ -247,9 +329,6 @@ flag_check:
                     int32_t str_len = insert_string(&out_str[write_index], 
                                                 out_str_len, arg_str, flags);
                     // update write_index and out_str_len with the actual change in length
-                    if(str_len < 0){
-                        return str_len;
-                    }
                     if((uint32_t)str_len > out_str_len){
                         write_index += out_str_len;
                         out_str_len = 0;
