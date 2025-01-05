@@ -652,3 +652,4 @@ static int32_t reverse_string(char * restrict out_str, uint32_t out_str_len,
     // return the max potential length added to out_str
     return max_len;
 }
+
