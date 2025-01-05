@@ -5,6 +5,10 @@
 #include <stdbool.h>
 #include <stdio.h>
 
+// printf_ buffer size. This defines the longest string printf_ can print.
+// make it larger to print longer strings, or smaller to decrease RAM usage.
+#define PRINTF_BUFFER_SIZE   512
+
 // maximum length of a single number including sign and padding
 // size of 34 should be enough to hold any 32 bit number converted to 
 // binary (widest format) plus a prefix of "0b"
@@ -38,7 +42,7 @@ static int32_t reverse_string(char * restrict out_str, uint32_t out_str_len,
 
 int32_t printf_(const char * restrict format_str, ...)
 {
-    char output_buffer[1000];
+    char output_buffer[PRINTF_BUFFER_SIZE];
     va_list arg;
     int32_t ret;
 
