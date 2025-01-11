@@ -19,7 +19,7 @@ Does everything I need it to. Will fix bugs as I come across them.
 
 
 ### Details
-Compiles down to 1552 bytes on `arm-none-eabi-gcc` with `-Os` optimizations. This can be made slightly smaller depending on which functions are actually called.
+Compiles down to 1554 bytes on `arm-none-eabi-gcc` with `-Os` optimizations. This can be made slightly smaller depending on which functions are actually called.
 mprintf is about 450 lines of code (per David A. Wheeler's `SLOCCount`).
 
 Max RAM usage can be controlled by changing the `printf()` buffer size. Shrinking the buffer saves RAM at the cost of decreasing the maximum string length `printf()` can handle.

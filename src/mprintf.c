@@ -41,6 +41,16 @@ static int32_t reverse_string(char * restrict out_str, uint32_t out_str_len,
                     struct format_flags flags);
 
 
+// prints a newline
+// returns the number of characters printed
+int32_t print_newline(void)
+{
+    // adjust line-ending as you see fit 
+    putchar('\r');
+    putchar('\n');
+    return(2);  // return the number of characters printed
+}
+
 // prints a string to output, but does not print a newline character at the end
 // returns the number of characters printed
 int32_t puts_(const char * restrict str)
@@ -66,11 +76,8 @@ int32_t println_(const char * restrict str)
         putchar(str[i++]);
     }
 
-    // adjust line-ending as you see fit 
-    putchar('\r');
-    i++;
-    putchar('\n');
-    i++;
+    // print a new line and add the character count
+    i += print_newline(); 
 
     return(i);
 }
@@ -101,11 +108,8 @@ int32_t printfln_(const char * restrict format_str, ...)
         putchar(output_buffer[i]);
     }
 
-    // adjust line-ending as you see fit 
-    putchar('\r');
-    print_len++;
-    putchar('\n');
-    print_len++;
+    // print a new line and add the character count
+    print_len += print_newline();
 
     return(print_len);
 }
