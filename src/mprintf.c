@@ -265,13 +265,26 @@ flag_check:
                     break;
             }
 
-            //check for field width
-            while(format_str[read_index] >= '0' && format_str[read_index] <= '9'){
-                // since we are reading left to right, each digit we read is worth 10x as much as the next digit
-                flags.min_width = flags.min_width * 10;
-                // subtracting the character for '0' is a quick way to convert char representation to actual number
-                flags.min_width += format_str[read_index] - '0';
+            // check for variable field width
+            if(format_str[read_index] == '*'){
+                // if using variable field width, its value is found in the next argument
+                int32_t var_field_width = va_arg(arg, int32_t);
+                // if the value is negative, treat it as a '-' flag followed by field width
+                if(var_field_width < 0){
+                    flags.min_width = -var_field_width;
+                    flags.left_align = true;
+                }else{
+                    flags.min_width = var_field_width;
+                }
                 read_index++;
+            }else{  // check for pre-defined field width
+                while(format_str[read_index] >= '0' && format_str[read_index] <= '9'){
+                    // since we are reading left to right, each digit we read is worth 10x as much as the next digit
+                    flags.min_width = flags.min_width * 10;
+                    // subtracting the character for '0' is a quick way to convert char representation to actual number
+                    flags.min_width += format_str[read_index] - '0';
+                    read_index++;
+                }
             }
 
             // additional conversion work is done when this variable is true

@@ -37,6 +37,21 @@ TEST sprintf_string_test(const char * restrict format_str, const char * restrict
     PASS();
 }
 
+TEST sprintf_var_width_string_test(const char * restrict format_str, int32_t width, const char * restrict in_str)
+{
+    char expected[BUFFER_SIZE * 2] = "";
+    char actual[BUFFER_SIZE * 2] = "";
+    expected[BUFFER_SIZE] = '\0';
+    actual[BUFFER_SIZE] = '\0';
+
+    sprintf(expected, format_str, width, in_str);
+    sprintf_(actual, format_str, width, in_str);
+
+    ASSERT_STR_EQ(expected, actual);
+
+    PASS();
+}
+
 TEST snprintf_test(const char * restrict format_str, uint32_t test_value)
 {
     char expected[BUFFER_SIZE * 2] = "";
@@ -155,9 +170,16 @@ SUITE(other_tests){
 
     RUN_TESTp(sprintf_string_test, "string insertion %s test", "this is a string to be inserted");
     RUN_TESTp(sprintf_string_test, "string insertion %30s test", "string to be inserted");
+    RUN_TESTp(sprintf_string_test, "string insertion %10s test", "string to be inserted");
+    RUN_TESTp(sprintf_string_test, "string insertion %-10s test", "string to be inserted");
     RUN_TESTp(sprintf_string_test, "string insertion %-30s test", "string to be inserted");
     RUN_TESTp(sprintf_string_test, "string insertion %-30s test", "string\0 to be inserted");
     RUN_TESTp(sprintf_string_test, "string \0insertion %s test", "this is a string to be inserted");
+
+    RUN_TESTp(sprintf_var_width_string_test, "variable-length string insertion %*s test", 30, "string to be inserted");
+    RUN_TESTp(sprintf_var_width_string_test, "variable-length string insertion %*s test", 10, "string to be inserted");
+    RUN_TESTp(sprintf_var_width_string_test, "variable-length string insertion %*s test", -10, "string to be inserted");
+    RUN_TESTp(sprintf_var_width_string_test, "variable-length string insertion %*s test", -30, "string to be inserted");
 
 
 }
