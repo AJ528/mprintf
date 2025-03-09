@@ -19,12 +19,12 @@ Does everything I need it to. Will fix bugs as I come across them.
 
 
 ### Details
-Compiles down to 1554 bytes on `arm-none-eabi-gcc` with `-Os` optimizations. This can be made slightly smaller depending on which functions are actually called.
-mprintf is about 450 lines of code (per David A. Wheeler's `SLOCCount`).
+Compiles down to 1578 bytes on `arm-none-eabi-gcc` with `-Os` optimizations. This can be made slightly smaller depending on which functions are actually called.
+mprintf is about 460 lines of code (per David A. Wheeler's `SLOCCount`).
 
 Max RAM usage can be controlled by changing the `printf()` buffer size. Shrinking the buffer saves RAM at the cost of decreasing the maximum string length `printf()` can handle.
 
-Supports b, c, d, i, p, s, u, X, x, and % conversion flags, minimum field widths, and 0- +# format flags.
+Supports b, c, d, i, p, s, u, X, x, and % conversion flags, minimum field widths, variable field widths, and 0- +# format flags.
 
 Designed with Cortex-M microcontrollers in mind, but there's no microcontroller-specific code in the file.
 
