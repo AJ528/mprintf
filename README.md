@@ -5,7 +5,7 @@ simple no-float 32-bit printf
 Does everything I need it to. Will fix bugs as I come across them.
 
 ### How to use this in an embedded project
-1. Copy `mprint.h` and `mprint.c` into your project
+1. Copy `mprint.h` and `mprint.c` into your project.
 2. In `mprint.c`, replace all the calls to `putchar()` with the appropriate one for your platform. In embedded projects, this is commonly a function that outputs data over UART.
 3. Once `putchar()` is replaced, the `#include <stdio.h>` line in `mprintf.c` should no longer be needed. Feel free to delete it.
 4. If needed, adjust the newline encoding in `print_newline()`.
